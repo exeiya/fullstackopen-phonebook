@@ -1,8 +1,15 @@
 const express = require('express')
-const app = express()
 const bodyParser = require('body-parser')
+const morgan = require('morgan')
+
+morgan.token('data', (req) => {
+  return JSON.stringify(req.body)
+})
+
+const app = express()
 
 app.use(bodyParser.json())
+app.use(morgan(':method :url :data :status :res[content-length] - :response-time ms'))
 
 let persons = [
     {
@@ -56,7 +63,7 @@ app.post('/api/persons', (req, res) => {
     const id = Math.floor(Math.random() * 1000000)
     const newPerson = { name, number, id }
     persons = persons.concat(newPerson)
-    
+
     res.json(newPerson)
   }
 })
