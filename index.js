@@ -3,11 +3,13 @@ const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const cors = require('cors')
 
+const app = express()
+
+const Person = require('./models/person')
+
 morgan.token('data', (req) => {
   return JSON.stringify(req.body)
 })
-
-const app = express()
 
 app.use(cors())
 app.use(bodyParser.json())
@@ -43,7 +45,11 @@ app.get('/info', (req, res) => {
 })
 
 app.get('/api/persons', (req, res) => {
-  res.json(persons)
+  Person
+    .find({})
+    .then(persons => {
+      res.json(persons.map(Person.format))
+    })
 })
 
 app.get('/api/persons/:id', (req, res) => {
@@ -60,14 +66,15 @@ app.post('/api/persons', (req, res) => {
   const { name, number } = req.body
   if(!(name && number)) {
     return res.status(400).json({ error: 'name or number missing' })
-  } else if (persons.find(person => person.name === name)) {
-    return res.status(400).json({ error: 'name must be unique '})
   } else {
-    const id = Math.floor(Math.random() * 1000000)
-    const newPerson = { name, number, id }
-    persons = persons.concat(newPerson)
-
-    res.json(newPerson)
+    const person = new Person({
+      name, number
+    })
+    person
+      .save()
+      .then(savedPerson => {
+        res.json(Person.format(savedPerson))
+      })
   }
 })
 
