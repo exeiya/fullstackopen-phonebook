@@ -77,7 +77,6 @@ app.post('/api/persons', (req, res) => {
 })
 
 app.put('/api/persons/:id', (req, res) => {
-  const { name, number } = req.body
   const person = {
     name: req.body.name,
     number: req.body.number
@@ -96,10 +95,11 @@ app.put('/api/persons/:id', (req, res) => {
 app.delete('/api/persons/:id', (req, res) => {
   Person
     .findByIdAndRemove(req.params.id)
-    .then(result => {
+    .then(() => {
       res.status(204).end()
     })
     .catch(error => {
+      console.log(error)
       res.status(400).send({ error: 'malformatted id' })
     })
 })
