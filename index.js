@@ -69,6 +69,9 @@ app.post('/api/persons', (req, res) => {
       })
       .catch(error => {
         console.log(error)
+        if (error.code === 11000) {
+          res.status(400).json({ error: 'name must be unique' }).end()
+        }
       })
   }
 })
