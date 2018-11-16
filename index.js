@@ -16,32 +16,16 @@ app.use(bodyParser.json())
 app.use(express.static('build'))
 app.use(morgan(':method :url :data :status :res[content-length] - :response-time ms'))
 
-let persons = [
-    {
-      "name": "Arto Hellas",
-      "number": "040-123456",
-      "id": 1
-    },
-    {
-      "name": "Martti Tienari",
-      "number": "040-123456",
-      "id": 2
-    },
-    {
-      "name": "Arto Järvinen",
-      "number": "040-123456",
-      "id": 3
-    },
-    {
-      "name": "Lea Kutvonen",
-      "number": "040-123456",
-      "id": 4
-    }
-]
-
 app.get('/info', (req, res) => {
-  res.send(`<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p>
-  <p>${new Date()}</p>`)
+  Person
+    .find({})
+    .then(persons => {
+      res.send(`<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p>
+      <p>${new Date()}</p>`)
+    })
+    .catch(error => {
+      console.log(error)
+    })
 })
 
 app.get('/api/persons', (req, res) => {
@@ -50,16 +34,24 @@ app.get('/api/persons', (req, res) => {
     .then(persons => {
       res.json(persons.map(Person.format))
     })
+    .catch(error => {
+      console.log(error)
+    })
 })
 
 app.get('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  const person = persons.find(person => person.id === id)
-  if (person) {
-    res.json(person)
-  } else {
-    res.status(404).end()
-  }
+  Person
+    .findOne({ _id: req.params.id })
+    .then(person => {
+      if (person) {
+        res.json(Person.format(person))
+      } else {
+        res.status(404).end()
+      }
+    })
+    .catch(error => {
+      console.log(error)
+    })
 })
 
 app.post('/api/persons', (req, res) => {
@@ -75,14 +67,38 @@ app.post('/api/persons', (req, res) => {
       .then(savedPerson => {
         res.json(Person.format(savedPerson))
       })
+      .catch(error => {
+        console.log(error)
+      })
   }
 })
 
-app.delete('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  persons = persons.filter(person => person.id !== id)
+app.put('/api/persons/:id', (req, res) => {
+  const { name, number } = req.body
+  const person = {
+    name: req.body.name,
+    number: req.body.number
+  }
+  Person
+    .findOneAndUpdate({ _id: req.params.id }, person, { new: true })
+    .then(updatedPerson => {
+      res.json(Person.format(updatedPerson))
+    })
+    .catch(error => {
+      console.log(error)
+      res.status(400).send({ error: 'malformatted id' })
+    })
+})
 
-  res.status(204).end()
+app.delete('/api/persons/:id', (req, res) => {
+  Person
+    .findByIdAndRemove(req.params.id)
+    .then(result => {
+      res.status(204).end()
+    })
+    .catch(error => {
+      res.status(400).send({ error: 'malformatted id' })
+    })
 })
 
 const PORT = process.env.PORT || 3001
